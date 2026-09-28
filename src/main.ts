@@ -47,6 +47,13 @@ function validateEnvironment(): void {
     Boolean(process.env.AWS_ACCESS_KEY_ID) &&
     Boolean(process.env.AWS_SECRET_ACCESS_KEY);
 
+  if (!process.env.GITHUB_TOKEN) {
+    throw new ReviewError(
+      'GITHUB_TOKEN is required so the GitHub MCP server can fetch pull request data.',
+      ErrorCodes.MISSING_GITHUB_TOKEN
+    );
+  }
+
   if (!hasAnthropicAuth && !hasAwsAuth) {
     throw new ReviewError(
       'Authentication is not configured. Set ANTHROPIC_API_KEY, or set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.',
@@ -112,20 +119,16 @@ async function main(): Promise<void> {
     const markdownReport = reportGenerator.generateMarkdownReport(report);
     const htmlReport = reportGenerator.generateHTMLReport(report);
 
-    const safeOwner = owner.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const safeRepo = repo.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const baseName = `${safeOwner}_${safeRepo}_${prNumber}`;
-
     await mkdir('reports', { recursive: true });
 
     await Promise.all([
-      writeFile(`reports/${baseName}.json`, jsonReport, 'utf8'),
-      writeFile(`reports/${baseName}.md`, markdownReport, 'utf8'),
-      writeFile(`reports/${baseName}.html`, htmlReport, 'utf8'),
+      writeFile('reports/report.json', jsonReport, 'utf8'),
+      writeFile('reports/report.md', markdownReport, 'utf8'),
+      writeFile('reports/report.html', htmlReport, 'utf8'),
     ]);
 
     console.log('✅ Review completed successfully.');
-    console.log(`📄 Reports written to reports/${baseName}.{json,md,html}`);
+    console.log('📄 Reports written to reports/report.{json,md,html}');
   } catch (error) {
     if (error instanceof ReviewError) {
       console.error(`❌ [${error.code}] ${error.message}`);
