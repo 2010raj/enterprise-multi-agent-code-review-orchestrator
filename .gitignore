@@ -10,3 +10,8 @@ coverage/
 *.tsbuildinfo
 .temp/
 reports/
+
+!reports/
+!reports/report.json
+!reports/report.md
+!reports/report.html
